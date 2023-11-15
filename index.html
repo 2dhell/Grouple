@@ -26,7 +26,8 @@
         #remoteVideo {
             background-color: #f0f0f0;
         }
-        #skip-btn {
+        #skip-btn,
+        #match-btn {
             padding: 10px;
             cursor: pointer;
             margin-top: 20px;
@@ -45,43 +46,52 @@
         <video id="remoteVideo" autoplay></video>
     </div>
     <div id="searching-text">Searching...</div>
+    <button id="match-btn" onclick="requestMatch()">Match</button>
     <button id="skip-btn" onclick="skipConnection()">Skip</button>
 
-    <script src="https://cdn.peerjs.com/0.6.1/peerjs.js"></script>
     <script>
+        const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
         const constraints = { video: true, audio: true };
-        const peer = new Peer();
+        const socket = new WebSocket('https://2dhell.github.io/backend_for_grouple/');
 
         let localStream;
+
+        socket.addEventListener('message', (event) => {
+            const data = JSON.parse(event.data);
+            handleSocketMessage(data);
+        });
+
+        function handleSocketMessage(data) {
+            switch (data.type) {
+                case 'user-id':
+                    document.getElementById('searching-text').innerText = 'Your ID: ' + data.userId;
+                    break;
+                case 'match-found':
+                    handleMatchFound(data.users);
+                    break;
+                // Handle other message types as needed
+            }
+        }
+
+        function requestMatch() {
+            const message = { type: 'match' };
+            socket.send(JSON.stringify(message));
+        }
+
+        function handleMatchFound(users) {
+            document.getElementById('searching-text').innerText = 'Match found!';
+            const [user1, user2] = users;
+            console.log(`Match found between ${user1} and ${user2}`);
+            // Initiate the WebRTC connection process, update UI, etc.
+            // You can add more logic here to handle the match found event
+        }
 
         navigator.mediaDevices.getUserMedia(constraints)
             .then((stream) => {
                 localStream = stream;
                 document.getElementById('localVideo').srcObject = stream;
-
-                // Register with PeerJS signaling server
-                peer.on('open', (id) => {
-                    document.getElementById('searching-text').innerText = 'Your ID: ' + id;
-                });
-
-                // Listen for incoming connections
-                peer.on('connection', handleConnection);
             })
             .catch((error) => console.error('getUserMedia error: ', error));
-
-        function handleConnection(connection) {
-            // Handle incoming connection
-            connection.on('open', () => {
-                document.getElementById('searching-text').innerText = 'Connected!';
-                const remoteStream = new MediaStream();
-                document.getElementById('remoteVideo').srcObject = remoteStream;
-
-                // Listen for remote stream
-                connection.on('stream', (remoteUserStream) => {
-                    remoteStream.addTrack(remoteUserStream.getTracks()[0]);
-                });
-            });
-        }
 
         function skipConnection() {
             localStream.getTracks().forEach(track => track.stop());
