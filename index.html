@@ -37,6 +37,11 @@
             font-weight: bold;
             color: #333;
         }
+        #user-list {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #555;
+        }
     </style>
 </head>
 <body>
@@ -44,50 +49,37 @@
         <video id="localVideo" autoplay muted></video>
         <video id="remoteVideo" autoplay></video>
     </div>
-   <style>
-    #button-container {
-        display: flex;
-        justify-content: space-around;
-        width: 80%;
-        margin-top: 20px;
-    }
+    <div id="button-container">
+        <button id="match-btn" onclick="requestMatch()">Match</button>
+        <button id="camera-toggle-btn" onclick="toggleCamera()">Toggle Camera</button>
+        <button id="mic-toggle-btn" onclick="toggleMicrophone()">Toggle Microphone</button>
+        <button id="skip-btn" onclick="skipConnection()">Skip</button>
+    </div>
+    <div id="searching-text"></div>
+    <div id="user-list"></div>
 
-    #match-btn, #camera-toggle-btn, #mic-toggle-btn, #skip-btn {
-        padding: 10px;
-        cursor: pointer;
-    }
-</style>
-
-<!-- Update the button container and add classes for styling -->
-<div id="button-container">
-    <button id="match-btn" onclick="requestMatch()">Match</button>
-    <button id="camera-toggle-btn" onclick="toggleCamera()">Toggle Camera</button>
-    <button id="mic-toggle-btn" onclick="toggleMicrophone()">Toggle Microphone</button>
-    <button id="skip-btn" onclick="skipConnection()">Skip</button>
-</div>
     <script>
-    const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-    const constraints = { video: true, audio: true };
-    const socket = new WebSocket('https://2dhell.github.io/backend_for_grouple/');
+        const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+        const constraints = { video: true, audio: true };
+        const socket = new WebSocket('wss://2dhell.github.io/backend_for_grouple/');
 
-    socket.addEventListener('error', (event) => {
-        console.error('WebSocket error:', event);
-    });
+        socket.addEventListener('error', (event) => {
+            console.error('WebSocket error:', event);
+        });
 
-    socket.addEventListener('close', (event) => {
-        console.log('WebSocket closed:', event);
-    });
+        socket.addEventListener('close', (event) => {
+            console.log('WebSocket closed:', event);
+        });
 
-    let localStream;
-    let peerConnection;
+        let localStream;
+        let peerConnection;
 
-    navigator.mediaDevices.getUserMedia(constraints)
-        .then((stream) => {
-            localStream = stream;
-            document.getElementById('localVideo').srcObject = stream;
-        })
-        .catch((error) => console.error('getUserMedia error: ', error));
-
+        navigator.mediaDevices.getUserMedia(constraints)
+            .then((stream) => {
+                localStream = stream;
+                document.getElementById('localVideo').srcObject = stream;
+            })
+            .catch((error) => console.error('getUserMedia error: ', error));
 
         function toggleCamera() {
             const videoTracks = localStream.getVideoTracks();
@@ -116,6 +108,9 @@
                     break;
                 case 'match-found':
                     handleMatchFound(data.users);
+                    break;
+                case 'user-list':
+                    updateUserList(data.users);
                     break;
                 case 'offer':
                 case 'answer':
@@ -190,6 +185,11 @@
                     peerConnection.addIceCandidate(iceCandidate);
                 }
             }
+        }
+
+        function updateUserList(users) {
+            const userListElement = document.getElementById('user-list');
+            userListElement.innerHTML = 'Users Online: ' + users.join(', ');
         }
     </script>
 </body>
