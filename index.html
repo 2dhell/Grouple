@@ -66,19 +66,28 @@
     <button id="skip-btn" onclick="skipConnection()">Skip</button>
 </div>
     <script>
-        const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-        const constraints = { video: true, audio: true };
-        const socket = new WebSocket('ws://localhost:3000'); // Change this to your backend WebSocket URL
+    const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+    const constraints = { video: true, audio: true };
+    const socket = new WebSocket('ws://localhost:3000');
 
-        let localStream;
-        let peerConnection;
+    socket.addEventListener('error', (event) => {
+        console.error('WebSocket error:', event);
+    });
 
-        navigator.mediaDevices.getUserMedia(constraints)
-            .then((stream) => {
-                localStream = stream;
-                document.getElementById('localVideo').srcObject = stream;
-            })
-            .catch((error) => console.error('getUserMedia error: ', error));
+    socket.addEventListener('close', (event) => {
+        console.log('WebSocket closed:', event);
+    });
+
+    let localStream;
+    let peerConnection;
+
+    navigator.mediaDevices.getUserMedia(constraints)
+        .then((stream) => {
+            localStream = stream;
+            document.getElementById('localVideo').srcObject = stream;
+        })
+        .catch((error) => console.error('getUserMedia error: ', error));
+
 
         function toggleCamera() {
             const videoTracks = localStream.getVideoTracks();
