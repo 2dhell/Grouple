@@ -35,23 +35,21 @@
     </div>
     <button id="skip-btn" onclick="skipConnection()">Skip</button>
 
-    <script src="https://cdn.simplewebrtc.com/latest-v3.js"></script>
     <script>
-        const webrtc = new SimpleWebRTC({
-            localVideoEl: 'localVideo',
-            remoteVideoEl: 'remoteVideo',
-            autoRequestMedia: true,
-            debug: true,  // Add this line for debugging
-        });
+        const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+        const constraints = { video: true, audio: true };
 
-        webrtc.on('readyToCall', function () {
-            // Request access to the webcam and microphone
-            webrtc.joinRoom('your-room-name');
-        });
+        let localStream;
+
+        navigator.mediaDevices.getUserMedia(constraints)
+            .then((stream) => {
+                localStream = stream;
+                document.getElementById('localVideo').srcObject = stream;
+            })
+            .catch((error) => console.error('getUserMedia error: ', error));
 
         function skipConnection() {
-            webrtc.leaveRoom();
-            webrtc.stopLocalVideo();
+            localStream.getTracks().forEach(track => track.stop());
         }
     </script>
 </body>
