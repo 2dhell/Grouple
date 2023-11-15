@@ -9,22 +9,33 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-direction: column;
             height: 100vh;
             margin: 0;
         }
         #video-container {
             display: flex;
             justify-content: space-between;
-            width: 100%;
+            width: 80%;
         }
         video {
-            width: 45%;
-            max-width: 400px;
+            width: 48%;
+            max-width: 600px;
             margin-bottom: 20px;
+        }
+        #remoteVideo {
+            background-color: #f0f0f0;
         }
         #skip-btn {
             padding: 10px;
             cursor: pointer;
+            margin-top: 20px;
+        }
+        #searching-text {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
         }
     </style>
 </head>
@@ -33,6 +44,7 @@
         <video id="localVideo" autoplay muted></video>
         <video id="remoteVideo" autoplay></video>
     </div>
+    <div id="searching-text">Searching...</div>
     <button id="skip-btn" onclick="skipConnection()">Skip</button>
 
     <script>
@@ -44,13 +56,4 @@
         navigator.mediaDevices.getUserMedia(constraints)
             .then((stream) => {
                 localStream = stream;
-                document.getElementById('localVideo').srcObject = stream;
-            })
-            .catch((error) => console.error('getUserMedia error: ', error));
-
-        function skipConnection() {
-            localStream.getTracks().forEach(track => track.stop());
-        }
-    </script>
-</body>
-</html>
+    
