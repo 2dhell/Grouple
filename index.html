@@ -47,13 +47,45 @@
     <div id="searching-text">Searching...</div>
     <button id="skip-btn" onclick="skipConnection()">Skip</button>
 
+    <script src="https://cdn.peerjs.com/0.6.1/peerjs.js"></script>
     <script>
-        const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
         const constraints = { video: true, audio: true };
+        const peer = new Peer();
 
         let localStream;
 
         navigator.mediaDevices.getUserMedia(constraints)
             .then((stream) => {
                 localStream = stream;
-    
+                document.getElementById('localVideo').srcObject = stream;
+
+                // Register with PeerJS signaling server
+                peer.on('open', (id) => {
+                    document.getElementById('searching-text').innerText = 'Your ID: ' + id;
+                });
+
+                // Listen for incoming connections
+                peer.on('connection', handleConnection);
+            })
+            .catch((error) => console.error('getUserMedia error: ', error));
+
+        function handleConnection(connection) {
+            // Handle incoming connection
+            connection.on('open', () => {
+                document.getElementById('searching-text').innerText = 'Connected!';
+                const remoteStream = new MediaStream();
+                document.getElementById('remoteVideo').srcObject = remoteStream;
+
+                // Listen for remote stream
+                connection.on('stream', (remoteUserStream) => {
+                    remoteStream.addTrack(remoteUserStream.getTracks()[0]);
+                });
+            });
+        }
+
+        function skipConnection() {
+            localStream.getTracks().forEach(track => track.stop());
+        }
+    </script>
+</body>
+</html>
