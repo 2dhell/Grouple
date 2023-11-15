@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Video Chat</title>
+    <title>Grouple</title>
     <style>
         body {
             display: flex;
@@ -30,7 +30,7 @@
 </head>
 <body>
     <div id="video-container">
-        <video id="localVideo" autoplay></video>
+        <video id="localVideo" autoplay muted></video>
         <video id="remoteVideo" autoplay></video>
     </div>
     <button id="skip-btn" onclick="skipConnection()">Skip</button>
@@ -45,16 +45,12 @@
 
         webrtc.on('readyToCall', function () {
             // Request access to the webcam and microphone
-            webrtc.startLocalVideo();
-            webrtc.mute();
-            webrtc.unmute();
             webrtc.joinRoom('your-room-name');
         });
 
         function skipConnection() {
             webrtc.leaveRoom();
-            webrtc.connection.disconnect();
-            webrtc.startLocalVideo();
+            webrtc.stopLocalVideo();
         }
     </script>
 </body>
