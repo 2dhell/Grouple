@@ -44,12 +44,27 @@
         <video id="localVideo" autoplay muted></video>
         <video id="remoteVideo" autoplay></video>
     </div>
-    <div id="searching-text">Searching...</div>
+   <style>
+    #button-container {
+        display: flex;
+        justify-content: space-around;
+        width: 80%;
+        margin-top: 20px;
+    }
+
+    #match-btn, #camera-toggle-btn, #mic-toggle-btn, #skip-btn {
+        padding: 10px;
+        cursor: pointer;
+    }
+</style>
+
+<!-- Update the button container and add classes for styling -->
+<div id="button-container">
     <button id="match-btn" onclick="requestMatch()">Match</button>
     <button id="camera-toggle-btn" onclick="toggleCamera()">Toggle Camera</button>
     <button id="mic-toggle-btn" onclick="toggleMicrophone()">Toggle Microphone</button>
     <button id="skip-btn" onclick="skipConnection()">Skip</button>
-
+</div>
     <script>
         const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
         const constraints = { video: true, audio: true };
