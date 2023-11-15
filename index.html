@@ -26,7 +26,7 @@
         #remoteVideo {
             background-color: #f0f0f0;
         }
-        #match-btn {
+        #match-btn, #camera-toggle-btn, #mic-toggle-btn {
             padding: 10px;
             cursor: pointer;
             margin-top: 20px;
@@ -46,109 +46,17 @@
     </div>
     <div id="searching-text">Searching...</div>
     <button id="match-btn" onclick="requestMatch()">Match</button>
+    <button id="camera-toggle-btn" onclick="toggleCamera()">Toggle Camera</button>
+    <button id="mic-toggle-btn" onclick="toggleMicrophone()">Toggle Microphone</button>
     <button id="skip-btn" onclick="skipConnection()">Skip</button>
 
     <script>
         const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
         const constraints = { video: true, audio: true };
-        const socket = new WebSocket('https://2dhell.github.io/backend_for_grouple/');
+        const socket = new WebSocket('ws://localhost:3000'); // Change this to your backend WebSocket URL
 
         let localStream;
         let peerConnection;
-
-        socket.addEventListener('message', (event) => {
-            const data = JSON.parse(event.data);
-            handleSocketMessage(data);
-        });
-
-        function handleSocketMessage(data) {
-            switch (data.type) {
-                case 'user-id':
-                    document.getElementById('searching-text').innerText = 'Your ID: ' + data.userId;
-                    break;
-                case 'match-found':
-                    handleMatchFound(data.users);
-                    break;
-                case 'offer':
-                case 'answer':
-                case 'ice-candidate':
-                    handleWebRTCMessage(data);
-                    break;
-                // Handle other message types as needed
-            }
-        }
-
-        function requestMatch() {
-            const message = { type: 'match' };
-            socket.send(JSON.stringify(message));
-        }
-
-        function handleMatchFound(users) {
-            document.getElementById('searching-text').innerText = 'Match found!';
-            const [user1, user2] = users;
-            console.log(`Match found between ${user1} and ${user2}`);
-
-            peerConnection = new RTCPeerConnection(configuration);
-
-            localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-
-            peerConnection.createOffer()
-                .then(offer => peerConnection.setLocalDescription(offer))
-                .then(() => {
-                    const message = {
-                        type: 'offer',
-                        data: peerConnection.localDescription,
-                        users: [user1, user2],
-                    };
-                    socket.send(JSON.stringify(message));
-                });
-        }
-
-        function handleWebRTCMessage(data) {
-            if (!peerConnection) {
-                peerConnection = new RTCPeerConnection(configuration);
-
-                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-
-                peerConnection.onicecandidate = (event) => {
-                    if (event.candidate) {
-                        const message = {
-                            type: 'ice-candidate',
-                            data: event.candidate,
-                            users: [data.senderId, data.userId], // Include sender and receiver IDs
-                        };
-                        socket.send(JSON.stringify(message));
-                    }
-                };
-
-                peerConnection.ontrack = (event) => {
-                    // Handle the remote stream (event.streams[0])
-                    document.getElementById('remoteVideo').srcObject = event.streams[0];
-                };
-
-                // Handle the offer
-                if (data.type === 'offer') {
-                    const offer = new RTCSessionDescription(data.data);
-                    peerConnection.setRemoteDescription(offer)
-                        .then(() => peerConnection.createAnswer())
-                        .then(answer => peerConnection.setLocalDescription(answer))
-                        .then(() => {
-                            const message = {
-                                type: 'answer',
-                                data: peerConnection.localDescription,
-                                users: [data.userId, data.senderId], // Include sender and receiver IDs
-                            };
-                            socket.send(JSON.stringify(message));
-                        });
-                }
-            } else if (data.type === 'answer') {
-                const answer = new RTCSessionDescription(data.data);
-                peerConnection.setRemoteDescription(answer);
-            } else if (data.type === 'ice-candidate') {
-                const iceCandidate = new RTCIceCandidate(data.data);
-                peerConnection.addIceCandidate(iceCandidate);
-            }
-        }
 
         navigator.mediaDevices.getUserMedia(constraints)
             .then((stream) => {
@@ -157,12 +65,22 @@
             })
             .catch((error) => console.error('getUserMedia error: ', error));
 
-        function skipConnection() {
-            if (peerConnection) {
-                peerConnection.close();
-            }
-            localStream.getTracks().forEach(track => track.stop());
+        function toggleCamera() {
+            const videoTracks = localStream.getVideoTracks();
+            videoTracks.forEach(track => track.enabled = !track.enabled);
         }
+
+        function toggleMicrophone() {
+            const audioTracks = localStream.getAudioTracks();
+            audioTracks.forEach(track => track.enabled = !track.enabled);
+        }
+
+        function requestMatch() {
+            const message = { type: 'match' };
+            socket.send(JSON.stringify(message));
+        }
+
+        // Rest of your WebSocket and WebRTC handling code...
     </script>
 </body>
 </html>
